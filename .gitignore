@@ -1,0 +1,13 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Generated ML artifacts
+*.pkl
+chunks.json
+
+# Large files
+sample.pdf
