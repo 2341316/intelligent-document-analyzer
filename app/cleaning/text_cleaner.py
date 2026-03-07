@@ -3,6 +3,21 @@ from app.utils.logger import logger
 from app.cleaning.chunker import create_chunks
 
 
+# ---------------- SECTION LABEL MAP ---------------- #
+
+SECTION_LABELS = {
+    "corporate": "Corporate_Overview",
+    "management": "Management_Discussion",
+    "risk": "Risk_Management",
+    "governance": "Governance",
+    "sustainability": "Sustainability",
+    "financial": "Financial_Statements",
+    "unknown": "Other"
+}
+
+
+# ---------------- BASIC CLEANING ---------------- #
+
 def clean_whitespace(text: str) -> str:
     text = re.sub(r'\s+', ' ', text)
     return text.strip()
@@ -27,27 +42,85 @@ def clean_page_text(text: str) -> str:
     return text
 
 
+# ---------------- MAIN FUNCTION ---------------- #
+
 def clean_document(document: dict) -> dict:
+
     cleaned_pages = []
 
     # Step 1: Clean each page
-    for i, page in enumerate(document["pages"], start=1):
+    for page in document["pages"]:
         if page and page.strip():
-            logger.info(f"Cleaning page {i}...")
             cleaned_page = clean_page_text(page)
             cleaned_pages.append(cleaned_page)
         else:
-            logger.warning(f"Skipping empty page {i}")
+            cleaned_pages.append("")
 
-    # Step 2: Chunk each cleaned page
     all_chunks = []
+    current_section = "unknown"
 
     for page_number, page_text in enumerate(cleaned_pages, start=1):
-        logger.info(f"Chunking page {page_number}...")
+
+        text_lower = page_text.lower()
+
+        # Default early pages to corporate
+        if current_section == "unknown" and page_number < 40:
+            current_section = "corporate"
+
+        # -------- STRICT SECTION DETECTION -------- #
+
+        # Financial (very strict)
+        if (
+            "financial statements" in text_lower
+            or "consolidated balance sheet" in text_lower
+            or "statement of profit and loss" in text_lower
+            or "independent auditor" in text_lower
+            or "notes forming part" in text_lower
+        ):
+            current_section = "financial"
+
+        elif "sustainability" in text_lower:
+            current_section = "sustainability"
+
+        elif (
+            "corporate governance" in text_lower
+            or "board of directors" in text_lower
+            or "statutory report" in text_lower
+            or "statutory section" in text_lower
+        ):
+            current_section = "governance"
+
+        elif "risk management" in text_lower:
+            current_section = "risk"
+
+        elif (
+            "management discussion" in text_lower
+            or "performance review" in text_lower
+            or "performance overview" in text_lower
+            or "performance and outlook" in text_lower
+            or "chairman" in text_lower
+            or "ceo" in text_lower
+        ):
+            current_section = "management"
+
+        elif (
+            ("corporate" in text_lower and "overview" in text_lower)
+            or "about infosys" in text_lower
+            or "about tcs" in text_lower
+            or "about wipro" in text_lower
+        ):
+            current_section = "corporate"
+
+        # -------- Chunk page -------- #
+
         page_chunks = create_chunks(page_text, page_number)
+
+        for chunk in page_chunks:
+            chunk["section"] = current_section
+            chunk["label"] = SECTION_LABELS[current_section]
+
         all_chunks.extend(page_chunks)
 
-    # Step 3: Return chunks instead of pages
     return {
         "filename": document["filename"],
         "chunks": all_chunks

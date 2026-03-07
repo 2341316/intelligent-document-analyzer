@@ -9,5 +9,9 @@ venv/
 *.pkl
 chunks.json
 
+# Data folders
+data/raw/
+data/processed/
+
 # Large files
 sample.pdf
