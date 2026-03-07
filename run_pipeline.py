@@ -35,14 +35,6 @@ for chunk in processed_document["chunks"]:
     all_chunks.append(chunk)
     chunk_counter += 1
 
-# Assign proper unique chunk IDs
-all_chunks = []
-chunk_counter = 1
-
-for chunk in processed_document["chunks"]:
-    chunk["chunk_id"] = chunk_counter
-    all_chunks.append(chunk)
-    chunk_counter += 1
 
 # Save chunks to file
 with open("chunks.json", "w") as f:
