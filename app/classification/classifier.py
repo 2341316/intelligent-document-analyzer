@@ -5,43 +5,18 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import joblib
+from imblearn.over_sampling import RandomOverSampler
 
 
-# STEP 1: Load chunk data
-with open("chunks.json", "r") as f:
+# STEP 1: Load combined chunk data
+with open("data/processed/combined_chunks.json", "r", encoding="utf-8") as f:
     chunks = json.load(f)
 
+# STEP 2: Extract text and labels (already assigned in JSON)
 texts = [chunk["text"] for chunk in chunks]
-pages = [chunk["page"] for chunk in chunks]
+labels = [chunk["label"] for chunk in chunks]
 
 print("Total chunks loaded:", len(texts))
-
-
-# STEP 2: Assign labels
-def assign_label(page):
-    if 18 <= page <= 27:
-        return 0  # Corporate overview
-    elif 28 <= page <= 36:
-        return 1  # Performance overview
-    elif 37 <= page <= 41:
-        return 2  # Approaching value creation
-    elif 42 <= page <= 55:
-        return 3  # Delivering value
-    elif 56 <= page <= 203:
-        return 4  # Statutory reports
-    elif 204 <= page <= 352:
-        return 5  # Financial statements
-    else:
-        return -1
-
-
-labels = [assign_label(p) for p in pages]
-
-# Remove unlabeled chunks
-filtered = [(t, l) for t, l in zip(texts, labels) if l != -1]
-texts, labels = zip(*filtered)
-
-print("After filtering:", len(texts))
 print("Class distribution:", Counter(labels))
 
 
@@ -59,13 +34,21 @@ X_train, X_test, y_train, y_test = train_test_split(
     X,
     labels,
     test_size=0.2,
-    random_state=42
+    random_state=42,
+    stratify=labels   # IMPORTANT improvement
 )
+
+# OVERSAMPLING
+
+ros = RandomOverSampler(random_state=42)
+X_train_resampled, y_train_resampled = ros.fit_resample(X_train, y_train)
+
+print("After Oversampling:", Counter(y_train_resampled))
 
 
 # STEP 5: Train model
 model = LogisticRegression(max_iter=1000, class_weight='balanced')
-model.fit(X_train, y_train)
+model.fit(X_train_resampled, y_train_resampled)
 
 
 # STEP 6: Evaluate
