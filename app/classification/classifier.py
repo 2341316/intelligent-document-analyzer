@@ -14,18 +14,27 @@ with open("data/processed/combined_chunks.json", "r", encoding="utf-8") as f:
 
 # STEP 2: Extract text and labels (already assigned in JSON)
 texts = [chunk["text"] for chunk in chunks]
-labels = [chunk["label"] for chunk in chunks]
+
+labels = []
+for chunk in chunks:
+    label = chunk["label"]
+
+    if label in ["Corporate_Overview", "Risk_Management", "Management_Discussion"]:
+        labels.append("Other")
+    else:
+        labels.append(label)
 
 print("Total chunks loaded:", len(texts))
 print("Class distribution:", Counter(labels))
 
 
-# STEP 3: TF-IDF
+# STEP 3: TF-IDF (Optimized -  Best Config)
 vectorizer = TfidfVectorizer(
+    ngram_range=(1, 2),
     max_features=5000,
+    min_df=1,
     stop_words="english"
 )
-
 X = vectorizer.fit_transform(texts)
 
 
