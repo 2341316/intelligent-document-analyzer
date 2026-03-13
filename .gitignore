@@ -19,3 +19,7 @@ sample.pdf
 
 # model outputs
 results/
+
+# MLflow files
+mlruns/
+mlflow.db

@@ -69,3 +69,5 @@ torch==2.10.0
 accelerate==1.13.0
 sentence-transformers==2.7.0
 faiss-cpu==1.13.2
+safetensors==0.4.5
+pickle5==0.0.12
