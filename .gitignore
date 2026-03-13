@@ -7,6 +7,7 @@ venv/
 
 # Generated ML artifacts
 *.pkl
+*.index
 chunks.json
 
 # Data folders
