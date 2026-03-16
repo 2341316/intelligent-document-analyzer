@@ -1,10 +1,17 @@
 from fastapi import FastAPI, UploadFile, File
 import os
 
+
 from app.ingestion.pdf_reader import parse_pdf
 from app.cleaning.text_cleaner import clean_document
 from app.vector_store.search import search
 from app.rag.rag_pipeline import ask_question
+
+import joblib
+
+classifier_model = joblib.load("baseline_model.pkl")
+vectorizer = joblib.load("tfidf_vectorizer.pkl")
+
 
 app = FastAPI(
     title="Intelligent Document Analysis API",
@@ -73,8 +80,13 @@ def rag_query(question: str):
 @app.post("/classify")
 def classify(text: str):
 
-    # Later connect transformer or classical model
+    # Convert text → TFIDF features
+    vector = vectorizer.transform([text])
+
+    # Predict label
+    prediction = classifier_model.predict(vector)[0]
+
     return {
         "text": text,
-        "prediction": "classification_not_connected_yet"
+        "prediction": prediction
     }
