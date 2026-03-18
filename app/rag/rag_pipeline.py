@@ -1,42 +1,79 @@
 import faiss
 import pickle
 import numpy as np
-from sentence_transformers import SentenceTransformer
-from transformers import pipeline
 
-## load FAISS Index
-index = faiss.read_index("data/processed/faiss_index.index")
+##  LAZY LOADING VARIABLES 
+embedding_model = None
+generator = None
+index = None
+metadata = None
+generator = None
 
-# Load Metadata
-with open("data/processed/faiss_metadata.pkl", "rb") as f:
-    metadata = pickle.load(f)
 
-# Load Embedding Model
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+##  LOADERS 
 
-# Retrieval Function
+def get_index():
+    global index
+    if index is None:
+        print("Loading FAISS index...")
+        index = faiss.read_index("data/processed/faiss_index.index")
+    return index
+
+
+def get_metadata():
+    global metadata
+    if metadata is None:
+        print("Loading metadata...")
+        with open("data/processed/faiss_metadata.pkl", "rb") as f:
+            metadata = pickle.load(f)
+    return metadata
+
+
+def get_embedding_model():
+    global embedding_model
+    if embedding_model is None:
+        print("Loading embedding model...")
+        from sentence_transformers import SentenceTransformer
+        embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return embedding_model
+
+
+def get_generator():
+    global generator
+    if generator is None:
+        print("Loading LLM...")
+        from transformers import pipeline
+        generator = pipeline(
+            "text-generation",
+            model="microsoft/phi-2",
+            max_new_tokens=150,
+            do_sample=False
+        )
+    return generator
+
+
+## RETRIEVAL
+
 def retrieve_chunks(query, k=2):
 
-    query_embedding = embedding_model.encode([query]).astype("float32")
+    model = get_embedding_model()
+    idx = get_index()
+    meta = get_metadata()
 
-    distances, indices = index.search(query_embedding, k)
+    query_embedding = model.encode([query]).astype("float32")
+
+    distances, indices = idx.search(query_embedding, k)
 
     retrieved_chunks = []
 
-    for idx in indices[0]:
-        retrieved_chunks.append(metadata[idx])
+    for i in indices[0]:
+        retrieved_chunks.append(meta[i])
 
     return retrieved_chunks
 
-# Load the LLM
-generator = pipeline(
-    "text-generation",
-    model="microsoft/phi-2",
-    max_new_tokens=150,
-    do_sample=False
-)
 
-#LLM needs document text as context
+## CONTEXT BUILDING
+
 def build_context(chunks):
 
     context = ""
@@ -46,7 +83,9 @@ def build_context(chunks):
 
     return context
 
-# prompt
+
+## PROMPT
+
 def build_prompt(context, question):
 
     prompt = f"""
@@ -66,19 +105,32 @@ Answer:
 
     return prompt
 
-# for generating answer
+
+## GENERATION
+
 def generate_answer(prompt):
+    global generator
+
+    if generator is None:
+        print("Loading LLM...")
+        from transformers import pipeline
+
+        generator = pipeline(
+            "text2text-generation",
+            model="google/flan-t5-base",
+            max_new_tokens=150
+        )
 
     response = generator(prompt)
 
     answer = response[0]["generated_text"]
-
-    # Remove the prompt from the generated output
     answer = answer.replace(prompt, "").strip()
 
     return answer
 
-# RAG Pipeline
+
+## RAG PIPELINE
+
 def ask_question(question):
 
     retrieved = retrieve_chunks(question)
@@ -96,7 +148,9 @@ def ask_question(question):
 
     return answer
 
-# Testing system
+
+##  TEST 
+
 if __name__ == "__main__":
 
     question = "What risks does the company mention?"

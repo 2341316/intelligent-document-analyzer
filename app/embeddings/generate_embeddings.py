@@ -1,9 +1,16 @@
 import json
-from sentence_transformers import SentenceTransformer
+
 from sklearn.metrics.pairwise import cosine_similarity
 
-# Load embedding model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        from sentence_transformers import SentenceTransformer
+        print("Loading model...")
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+    return model
 
 # Load dataset
 with open("data/processed/combined_chunks.json", "r", encoding="utf-8") as f:
@@ -15,7 +22,7 @@ print("Total chunks:", len(chunks))
 texts = [chunk["text"] for chunk in chunks]
 
 # Generate embeddings
-embeddings = model.encode(texts)
+embeddings = get_model.encode(texts)
 
 print("Embedding shape:", embeddings.shape)
 
@@ -38,7 +45,7 @@ print("Similarity between chunk 1 and 2:", similarity[0][0])
 
 query = "financial performance and revenue growth"
 
-query_embedding = model.encode([query])
+query_embedding = get_model.encode([query])
 
 similarities = cosine_similarity(query_embedding, embeddings)
 

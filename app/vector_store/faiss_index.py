@@ -2,10 +2,18 @@ import json
 import numpy as np
 import faiss
 import pickle
-from sentence_transformers import SentenceTransformer
 
-print("Loading embedding model...")
-model = SentenceTransformer("all-MiniLM-L6-v2")
+## LAZY LOAD EMBEDDING MODEL 
+embedding_model = None
+
+def get_model():
+    global embedding_model
+    if embedding_model is None:
+        print("Loading embedding model...")
+        from sentence_transformers import SentenceTransformer
+        embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return embedding_model
+
 
 print("Loading chunks...")
 
@@ -16,6 +24,8 @@ with open("data/processed/combined_chunks.json", "r", encoding="utf-8") as f:
 texts = [chunk["text"] for chunk in chunks]
 
 print("Generating embeddings...")
+
+model = get_model()
 
 embeddings = model.encode(texts, show_progress_bar=True)
 
@@ -42,4 +52,4 @@ faiss.write_index(index, "data/processed/faiss_index.index")
 with open("data/processed/faiss_metadata.pkl", "wb") as f:
     pickle.dump(chunks, f)
 
-print("FAISS index saved successfully")
+print("FAISS index saved successfully") 

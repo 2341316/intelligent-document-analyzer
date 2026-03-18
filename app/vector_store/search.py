@@ -1,35 +1,65 @@
 import faiss
 import pickle
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
-print("Loading embedding model...")
-model = SentenceTransformer("all-MiniLM-L6-v2")
+## LAZY LOAD VARIABLES
+embedding_model = None
+index = None
+chunks = None
 
-print("Loading FAISS index...")
-index = faiss.read_index("data/processed/faiss_index.index")
 
-print("Loading metadata...")
-with open("data/processed/faiss_metadata.pkl", "rb") as f:
-    chunks = pickle.load(f)
+## LOADERS 
 
+def get_model():
+    global embedding_model
+    if embedding_model is None:
+        print("Loading embedding model...")
+        from sentence_transformers import SentenceTransformer
+        embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+    return embedding_model
+
+
+def get_index():
+    global index
+    if index is None:
+        print("Loading FAISS index...")
+        index = faiss.read_index("data/processed/faiss_index.index")
+    return index
+
+
+def get_chunks():
+    global chunks
+    if chunks is None:
+        print("Loading metadata...")
+        with open("data/processed/faiss_metadata.pkl", "rb") as f:
+            chunks = pickle.load(f)
+    return chunks
+
+
+## SEARCH FUNCTION
 
 def search(query, top_k=5):
 
     print("Embedding query...")
 
+    model = get_model()
+    idx = get_index()
+    data = get_chunks()
+
     query_embedding = model.encode([query])
     query_embedding = np.array(query_embedding).astype("float32")
 
-    distances, indices = index.search(query_embedding, top_k)
+    distances, indices = idx.search(query_embedding, top_k)
 
     results = []
 
-    for idx in indices[0]:
-        results.append(chunks[idx])
+    for i in indices[0]:
+        results.append(data[i])
 
     return results
 
+
+## TEST 
 
 if __name__ == "__main__":
 
