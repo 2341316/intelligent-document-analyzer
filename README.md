@@ -70,7 +70,6 @@ check_distribution.py
 test_chunking.py
 
 requirements.txt
-Dockerfile
 README.md
 ```
 
