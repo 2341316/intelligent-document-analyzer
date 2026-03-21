@@ -3,7 +3,7 @@ from app.utils.logger import logger
 from app.cleaning.chunker import create_chunks
 
 
-# ---------------- SECTION LABEL MAP ---------------- #
+# SECTION LABEL MAP
 
 SECTION_LABELS = {
     "corporate": "Corporate_Overview",
@@ -16,7 +16,7 @@ SECTION_LABELS = {
 }
 
 
-# ---------------- BASIC CLEANING ---------------- #
+# BASIC CLEANING 
 
 def clean_whitespace(text: str) -> str:
     text = re.sub(r'\s+', ' ', text)
@@ -42,7 +42,7 @@ def clean_page_text(text: str) -> str:
     return text
 
 
-# ---------------- MAIN FUNCTION ---------------- #
+#MAIN FUNCTION
 
 def clean_document(document: dict) -> dict:
 
@@ -67,7 +67,7 @@ def clean_document(document: dict) -> dict:
         if current_section == "unknown" and page_number < 40:
             current_section = "corporate"
 
-        # -------- STRICT SECTION DETECTION -------- #
+        #  STRICT SECTION DETECTION
 
         # Financial (very strict)
         if (
@@ -111,7 +111,7 @@ def clean_document(document: dict) -> dict:
         ):
             current_section = "corporate"
 
-        # -------- Chunk page -------- #
+        # Chunk page 
 
         page_chunks = create_chunks(page_text, page_number)
 
