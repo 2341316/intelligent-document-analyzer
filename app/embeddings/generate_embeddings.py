@@ -31,7 +31,7 @@ print("\nFirst embedding vector (first 10 numbers):")
 print(list(embeddings[0][:10]))
 
 
-# -------- Cosine Similarity Test --------
+# Cosine Similarity Test
 
 similarity = cosine_similarity(
     [embeddings[0]],
