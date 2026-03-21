@@ -8,7 +8,7 @@ from app.rag.rag_pipeline import ask_question
 
 import joblib
 
-# ✅ Correct order
+# Correct order
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, "../../"))
 
