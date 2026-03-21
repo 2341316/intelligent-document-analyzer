@@ -24,7 +24,7 @@ print("\nFirst embedding vector (first 10 numbers):")
 print(list(embeddings[0][:10]))
 
 
-# -------- Cosine Similarity Test --------
+# Cosine Similarity Test
 
 similarity = cosine_similarity(
     [embeddings[0]],
@@ -34,7 +34,7 @@ similarity = cosine_similarity(
 print("Similarity between chunk 1 and 2:", similarity[0][0])
 
 
-# -------- Query Similarity Example --------
+# Query Similarity Example
 
 query = "financial performance and revenue growth"
 
@@ -48,7 +48,7 @@ print("\nBest matching chunk:")
 print(chunks[best_match]["text"])
 
 
-# -------- Save embeddings --------
+# Save embeddings
 
 for i, chunk in enumerate(chunks):
     chunk["embedding"] = embeddings[i].tolist()
